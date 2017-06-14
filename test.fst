@@ -40,16 +40,11 @@ let big_endian_single n =
   let s = (create 1 n) in
   assert (big_endian s == U8.v (index s 0) + pow2 8 * big_endian (slice s 0 0))
 
-(* private // TODO
+private
 val big_endian_long: (b:Seq.seq U8.t{Seq.length b > 0}) -> Lemma
-  (requires (let ilen = U8.v (Seq.index b 0) - 0x80 in
-             ilen > 0 /\ ilen < 5 /\ Seq.length b > ilen /\
-             not (Seq.slice b 1 (ilen + 1) = Seq.create ilen 0uy)))
-  (ensures (read_length_success b))
-let read_length_success_lemma6 b =
-  let ilen = U8.v (Seq.index b 0) - 0x80 in
-  //assert (big_endian (Seq.slice b 1 (ilen + 1)) > 0)
-  assert (True) *)
+  (requires (not (b = Seq.create (Seq.length b) 0uy)))
+  (ensures (big_endian b > 0))
+let read_length_success_lemma6 b = ()
 
 
 
