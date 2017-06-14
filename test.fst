@@ -71,7 +71,8 @@ let read_length_success_lemma3 (b:Seq.seq U8.t{Seq.length b > 0}) : Lemma
 
 private // The long form must have enough length bytes.
 let read_length_success_lemma4 (b:Seq.seq U8.t{Seq.length b > 0}) : Lemma
-  (requires (U8.v (Seq.index b 0) > 0x80 /\ U8.v (Seq.index b 0) < 0x85) /\ Seq.length b <= (U8.v (Seq.index b 0)) - 0x80) // TODO
+  (requires (U8.v (Seq.index b 0) > 0x80 /\ U8.v (Seq.index b 0) < 0x85 /\
+             Seq.length b <= (U8.v (Seq.index b 0)) - 0x80))
   (ensures (not (read_length_success b)))
   = ()
 
