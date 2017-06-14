@@ -8,7 +8,6 @@ open FStar.Mul
 module U8 = FStar.UInt8
 module U32 = FStar.UInt32
 
-//#reset-options "--initial_fuel 1 --max_fuel 1"
 #reset-options "--max_fuel 1 --z3rlimit 100"
 
 
@@ -30,7 +29,6 @@ let rec big_endian_zero len =
   else (
     let nlen = len - 1 in
     lemma_eq_intro (slice (create len 0uy) 0 nlen) (create nlen 0uy);
-    //assert (big_endian (create len 0uy) == 0 + pow2 8 * big_endian (slice (create len 0uy) 0 (len - 1)));
     big_endian_zero nlen
   )
 
@@ -73,7 +71,7 @@ let read_length_success_lemma3 (b:Seq.seq U8.t{Seq.length b > 0}) : Lemma
 
 private // The long form must have enough length bytes.
 let read_length_success_lemma4 (b:Seq.seq U8.t{Seq.length b > 0}) : Lemma
-  (requires (U8.v (Seq.index b 0) > 0x80 /\ U8.v (Seq.index b 0) < 0x85) /\ Seq.length b <= (U8.v (Seq.index b 0)) - 0x80)
+  (requires (U8.v (Seq.index b 0) > 0x80 /\ U8.v (Seq.index b 0) < 0x85) /\ Seq.length b <= (U8.v (Seq.index b 0)) - 0x80) // TODO
   (ensures (not (read_length_success b)))
   = ()
 
@@ -83,19 +81,18 @@ val read_length_success_lemma5: (b:Seq.seq U8.t{Seq.length b > 0}) -> Lemma
              Seq.length b > U8.v (Seq.index b 0) - 0x80 /\
              (forall i. i > 0 /\ i < Seq.length b ==> Seq.index b i = 0uy)))
   (ensures (not (read_length_success b)))
-let read_length_success_lemma5 b =
+let read_length_success_lemma5 b = // TODO
    let len = U8.v (Seq.index b 0) - 0x80 + 1 in
    assert (Seq.length b >= len /\ len >= 1);
    Seq.lemma_eq_intro (Seq.slice b 1 len) (Seq.create (len - 1) 0uy);
    assert (big_endian (Seq.create (len - 1) 0uy) = 0);
    assert (big_endian (Seq.slice b 1 len) = 0)
 
-(* private
-// Success with long form parsing means we have more than just zero bytes.
-let read_length_success_lemma6 (b:Seq.seq U8.t{Seq.length b > 0}) : Lemma
-  (requires (U8.v (Seq.index b 0) > 0x80 /\ U8.v (Seq.index b 0) < 0x85) /\ Seq.length b > (U8.v (Seq.index b 0)) - 0x80)
-  (ensures (read_length_success b ==> big_endian (Seq.slice b 1 ((Seq.index b 0) - 0x80 + 1)) > 0 /\ b <> (Seq.create (Seq.length b) 0uy)))
-  = () *)
+//private // Success with long form means we have more than just zero bytes.
+//let read_length_success_lemma6 (b:Seq.seq U8.t{Seq.length b > 0}) : Lemma
+  //(requires (U8.v (Seq.index b 0) > 0x80 /\ U8.v (Seq.index b 0) < 0x85) /\ Seq.length b > (U8.v (Seq.index b 0)) - 0x80)
+  //(ensures (read_length_success b ==> big_endian (Seq.slice b 1 ((Seq.index b 0) - 0x80 + 1)) > 0 /\ b <> (Seq.create (Seq.length b) 0uy)))
+  //= ()
 
 // TODO check long form with starting zero bytes
 
