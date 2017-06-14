@@ -78,12 +78,13 @@ let read_length_success_lemma4 (b:Seq.seq U8.t{Seq.length b > 0}) : Lemma
 
 private // The long form must not be all zero bytes.
 val read_length_success_lemma5: (b:Seq.seq U8.t{Seq.length b > 0}) -> Lemma
-  (requires (U8.v (Seq.index b 0) > 0x80 /\ U8.v (Seq.index b 0) < 0x85 /\
-             Seq.length b > U8.v (Seq.index b 0) - 0x80 /\ // TODO cleanup
-             Seq.slice b 1 (U8.v (Seq.index b 0) - 0x80 + 1) = Seq.create (U8.v (Seq.index b 0) - 0x80 + 1) 0uy))
+  (requires (let ilen = U8.v (Seq.index b 0) - 0x80 in
+             ilen > 0 /\ ilen < 5 /\ Seq.length b > ilen /\
+             Seq.slice b 1 (ilen + 1) = Seq.create ilen 0uy))
   (ensures (not (read_length_success b)))
 let read_length_success_lemma5 b =
-   assert (big_endian (Seq.slice b 1 (U8.v (Seq.index b 0) - 0x80 + 1)) = 0)
+   let ilen = U8.v (Seq.index b 0) - 0x80 in
+   assert (big_endian (Seq.slice b 1 (ilen + 1)) = 0)
 
 //private // Success with long form means we have more than just zero bytes.
 //let read_length_success_lemma6 (b:Seq.seq U8.t{Seq.length b > 0}) : Lemma
@@ -98,7 +99,7 @@ let read_length_success_lemma5 b =
 val read_length :
   buf:buffer U8.t ->
   len:U32.t{U32.v len <= 4} ->
-  ST (r:U32.t{U32.v r < pow2 (8 * U32.v len)}) // TODO
+  ST (r:U32.t{U32.v r < pow2 (8 * U32.v len)})
   (requires (fun h -> live h buf /\ U32.v len = length buf))
   (ensures (fun h0 r h1 -> h0 == h1 /\ live h1 buf /\ U32.v r = big_endian (as_seq h0 buf)))
   (decreases (length buf))
