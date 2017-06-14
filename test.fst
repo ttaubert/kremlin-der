@@ -28,7 +28,7 @@ let rec big_endian_zero len =
   if len = 0 then ()
   else (
     let nlen = len - 1 in
-    lemma_eq_intro (slice (create len 0uy) 0 nlen) (create nlen 0uy); // TODO == ?
+    lemma_eq_intro (slice (create len 0uy) 0 nlen) (create nlen 0uy);
     big_endian_zero nlen
   )
 
@@ -71,15 +71,15 @@ let read_length_success_lemma3 (b:Seq.seq U8.t{Seq.length b > 0}) : Lemma
 
 private // The long form must have enough length bytes.
 let read_length_success_lemma4 (b:Seq.seq U8.t{Seq.length b > 0}) : Lemma
-  (requires (U8.v (Seq.index b 0) > 0x80 /\ U8.v (Seq.index b 0) < 0x85 /\
-             Seq.length b <= (U8.v (Seq.index b 0)) - 0x80))
+  (requires (let ilen = U8.v (Seq.index b 0) - 0x80 in
+             ilen > 0 /\ ilen < 5 /\ Seq.length b <= ilen))
   (ensures (not (read_length_success b)))
   = ()
 
 private // The long form must not be all zero bytes.
 val read_length_success_lemma5: (b:Seq.seq U8.t{Seq.length b > 0}) -> Lemma
   (requires (U8.v (Seq.index b 0) > 0x80 /\ U8.v (Seq.index b 0) < 0x85 /\
-             Seq.length b > U8.v (Seq.index b 0) - 0x80 /\
+             Seq.length b > U8.v (Seq.index b 0) - 0x80 /\ // TODO cleanup
              Seq.slice b 1 (U8.v (Seq.index b 0) - 0x80 + 1) = Seq.create (U8.v (Seq.index b 0) - 0x80 + 1) 0uy))
   (ensures (not (read_length_success b)))
 let read_length_success_lemma5 b =
