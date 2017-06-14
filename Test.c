@@ -39,10 +39,7 @@ bool Test_parse_len(uint8_t *buf, uint32_t len, uint32_t *out_len)
         if (len <= ilen1)
           ite = (uint32_t )0;
         else
-        {
-          uint8_t *lbytes = buf + (uint32_t )1;
-          ite = Test_read_length(lbytes, ilen1);
-        }
+          ite = Test_read_length(buf + (uint32_t )1, ilen1);
         ite1 = ite;
       }
       ite0 = ite1;

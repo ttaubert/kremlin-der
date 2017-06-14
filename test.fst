@@ -104,9 +104,9 @@ let read_length_success_lemma6 (b:Seq.seq U8.t{Seq.length b > 0}) : Lemma
 val read_length :
   buf:buffer U8.t ->
   len:U32.t{U32.v len <= 4} ->
-  ST (r:U32.t{U32.v r < pow2 (8 * U32.v len)}) // TODO
-  (requires (fun h -> live h buf /\ U32.v len == length buf))
-  (ensures (fun h0 r h1 -> h0 == h1 /\ live h1 buf /\ U32.v r == big_endian (as_seq h0 buf)))
+  ST (r:U32.t{U32.v r < pow2 (8 * U32.v len)})
+  (requires (fun h -> live h buf /\ U32.v len = length buf))
+  (ensures (fun h0 r h1 -> h0 == h1 /\ live h1 buf /\ U32.v r = big_endian (as_seq h0 buf)))
   (decreases (length buf))
 
 let rec read_length buf len =
@@ -117,11 +117,7 @@ let rec read_length buf len =
     let bi = index buf len in
     let lo = uint8_to_uint32 bi in
     Math.Lemmas.pow2_plus 8 24;
-    // TODO assert Buffer.sub
-    //Seq.lemma_eq_intro (as_seq h lbytes) (Seq.slice (as_seq h buf) 1 (U32.v ilen + 1)); // TODO
     let hi = read_length (Buffer.sub buf 0ul len) len in
-    let h = ST.get() in // TODO
-    assert (U32.v hi == big_endian (Seq.slice (as_seq h buf) 0 (U32.v len))); // TODO
     assert (U32.v hi < pow2 (8 * (U32.v len)));
     let hi' = hi <<^ 8ul in
     assert (hi = 0ul ==> hi' = 0ul);
@@ -173,8 +169,7 @@ let parse_len buf len out_len =
     assert (not is_short_form);
     assert (length buf > U32.v ilen);
     assert (U32.v ilen > 0 && U32.v ilen < 5);
-    let lbytes = Buffer.sub buf 1ul ilen in // TODO
-    read_length lbytes ilen
+    read_length (Buffer.sub buf 1ul ilen) ilen
   ) in
 
   // Write the result.
@@ -182,19 +177,7 @@ let parse_len buf len out_len =
 
   // If we picked a result > 0, success.
   // If the result is 0 because ilen is 0, only accept the short form.
-  let success = U32.(res >^ 0ul) || (ilen = 0ul && is_short_form) in
+  U32.(res >^ 0ul) || (ilen = 0ul && is_short_form)
 
-  // Short form is easy to parse and always succeeds.
-  assert (U8.(b0 <^ 0x80uy) ==> res = (uint8_to_uint32 b0) /\ success);
   // TODO
-  assert ((U8.(b0 >^ 0x80uy /\ b0 <^ 0x85uy) /\ (U32.v len > ((U8.v b0) - 0x80))) ==> U32.(res >=^ 0ul)); //\ success);
-
-  // Fail when given a zero length in long form.
-  assert (b0 = 0x80uy ==> res = 0ul /\ not success);
-  // We can't parse long form with more than 4 bytes.
-  assert (U8.(b0 >^ 0x84uy) ==> res = 0ul /\ not success);
-  // The long form must have enough length bytes.
-  assert (U8.(b0 >^ 0x80uy /\ b0 <^ 0x85uy) /\
-          (U32.v len <= (U8.v b0) - 0x80) ==> res = 0ul /\ not success);
-
-  success
+  //assert ((U8.(b0 >^ 0x80uy /\ b0 <^ 0x85uy) /\ (U32.v len > ((U8.v b0) - 0x80))) ==> U32.(res >=^ 0ul)); //\ success);
