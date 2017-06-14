@@ -20,7 +20,7 @@ let rec big_endian (b:Seq.seq U8.t) : Tot nat (decreases (FStar.Seq.length b)) =
 
 private
 val big_endian_zero: len:nat -> Lemma
-  (ensures (big_endian (Seq.create len 0uy) == 0))
+  (ensures (big_endian (Seq.create len 0uy) = 0))
   (decreases (len))
   [SMTPat (big_endian (Seq.create len 0uy))]
 let rec big_endian_zero len =
@@ -39,6 +39,17 @@ let big_endian_single n =
   let open FStar.Seq in
   let s = (create 1 n) in
   assert (big_endian s == U8.v (index s 0) + pow2 8 * big_endian (slice s 0 0))
+
+(* private // TODO
+val big_endian_long: (b:Seq.seq U8.t{Seq.length b > 0}) -> Lemma
+  (requires (let ilen = U8.v (Seq.index b 0) - 0x80 in
+             ilen > 0 /\ ilen < 5 /\ Seq.length b > ilen /\
+             not (Seq.slice b 1 (ilen + 1) = Seq.create ilen 0uy)))
+  (ensures (read_length_success b))
+let read_length_success_lemma6 b =
+  let ilen = U8.v (Seq.index b 0) - 0x80 in
+  //assert (big_endian (Seq.slice b 1 (ilen + 1)) > 0)
+  assert (True) *)
 
 
 
@@ -83,14 +94,19 @@ val read_length_success_lemma5: (b:Seq.seq U8.t{Seq.length b > 0}) -> Lemma
              Seq.slice b 1 (ilen + 1) = Seq.create ilen 0uy))
   (ensures (not (read_length_success b)))
 let read_length_success_lemma5 b =
-   let ilen = U8.v (Seq.index b 0) - 0x80 in
-   assert (big_endian (Seq.slice b 1 (ilen + 1)) = 0)
+  let ilen = U8.v (Seq.index b 0) - 0x80 in
+  assert (big_endian (Seq.slice b 1 (ilen + 1)) = 0)
 
-//private // Success with long form means we have more than just zero bytes.
-//let read_length_success_lemma6 (b:Seq.seq U8.t{Seq.length b > 0}) : Lemma
-  //(requires (U8.v (Seq.index b 0) > 0x80 /\ U8.v (Seq.index b 0) < 0x85) /\ Seq.length b > (U8.v (Seq.index b 0)) - 0x80)
-  //(ensures (read_length_success b ==> big_endian (Seq.slice b 1 ((Seq.index b 0) - 0x80 + 1)) > 0 /\ b <> (Seq.create (Seq.length b) 0uy)))
-  //= ()
+(* private // Success with long form means we have more than just zero bytes.
+val read_length_success_lemma6: (b:Seq.seq U8.t{Seq.length b > 0}) -> Lemma
+  (requires (let ilen = U8.v (Seq.index b 0) - 0x80 in
+             ilen > 0 /\ ilen < 5 /\ Seq.length b > ilen /\
+             not (Seq.slice b 1 (ilen + 1) = Seq.create ilen 0uy)))
+  (ensures (read_length_success b))
+let read_length_success_lemma6 b =
+  let ilen = U8.v (Seq.index b 0) - 0x80 in
+  //assert (big_endian (Seq.slice b 1 (ilen + 1)) > 0)
+  assert (True) *)
 
 // TODO check long form with starting zero bytes
 
