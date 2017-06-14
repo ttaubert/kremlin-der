@@ -41,8 +41,7 @@ bool Test_parse_len(uint8_t *buf, uint32_t len, uint32_t *out_len)
         else
         {
           uint8_t *lbytes = buf + (uint32_t )1;
-          uint32_t tmp = Test_read_length(lbytes, ilen1);
-          ite = tmp;
+          ite = Test_read_length(lbytes, ilen1);
         }
         ite1 = ite;
       }
@@ -51,7 +50,6 @@ bool Test_parse_len(uint8_t *buf, uint32_t len, uint32_t *out_len)
     res = ite0;
   }
   out_len[0] = res;
-  bool success = res > (uint32_t )0 || ilen1 == (uint32_t )0 && is_short_form;
-  return success;
+  return res > (uint32_t )0 || ilen1 == (uint32_t )0 && is_short_form;
 }
 

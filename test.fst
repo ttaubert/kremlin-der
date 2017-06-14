@@ -12,7 +12,7 @@ module U32 = FStar.UInt32
 #reset-options "--max_fuel 1 --z3rlimit 100"
 
 
-private (* HACL* -> FStar.Endianness *)
+private
 let rec big_endian (b:Seq.seq U8.t) : Tot nat (decreases (FStar.Seq.length b)) =
   let open FStar.Seq in
   if length b = 0 then 0
@@ -173,13 +173,8 @@ let parse_len buf len out_len =
     assert (not is_short_form);
     assert (length buf > U32.v ilen);
     assert (U32.v ilen > 0 && U32.v ilen < 5);
-    let lbytes = Buffer.sub buf 1ul ilen in
-    let h = ST.get() in // TODO
-    Seq.lemma_eq_intro (as_seq h lbytes) (Seq.slice (as_seq h buf) 1 (U32.v ilen + 1));
-    let tmp = read_length lbytes ilen in // TODO
-    let h = ST.get() in // TODO
-    assert (U32.v tmp == big_endian (Seq.slice (as_seq h buf) 1 (U32.v ilen + 1))); // TODO
-    tmp // TODO
+    let lbytes = Buffer.sub buf 1ul ilen in // TODO
+    read_length lbytes ilen
   ) in
 
   // Write the result.
@@ -194,7 +189,6 @@ let parse_len buf len out_len =
   // TODO
   assert ((U8.(b0 >^ 0x80uy /\ b0 <^ 0x85uy) /\ (U32.v len > ((U8.v b0) - 0x80))) ==> U32.(res >=^ 0ul)); //\ success);
 
-  let h = ST.get() in
   // Fail when given a zero length in long form.
   assert (b0 = 0x80uy ==> res = 0ul /\ not success);
   // We can't parse long form with more than 4 bytes.
@@ -202,29 +196,5 @@ let parse_len buf len out_len =
   // The long form must have enough length bytes.
   assert (U8.(b0 >^ 0x80uy /\ b0 <^ 0x85uy) /\
           (U32.v len <= (U8.v b0) - 0x80) ==> res = 0ul /\ not success);
-
-  // TODO The long form must not be all zero bytes.
-  //Seq.lemma_len_slice (as_seq h buf) 1 ((U8.v b0) - 0x80 + 1);
-  //Seq.lemma_index_create ((U8.v b0) - 0x80) 0uy ((U8.v b0) - 0x80 - 1);
-  assert (U8.(b0 >^ 0x80uy /\ b0 <^ 0x85uy) ==> ((U8.v b0) - 0x80) == (U32.v ilen));
-  assert (U8.(b0 >^ 0x80uy /\ b0 <^ 0x85uy) ==> ((U8.v b0) - 0x80 + 1) == (U32.v ilen) + 1);
-  //assert ((U8.(b0 >^ 0x80uy /\ b0 <^ 0x85uy) /\ (U32.v len > ((U8.v b0) - 0x80)) /\ (Seq.equal (Seq.slice (as_seq h buf) 1 ((U8.v b0) - 0x80 + 1)) (Seq.create ((U8.v b0) - 0x80) 0uy))) ==> res = 0ul /\ not success);
-  assert (U8.(b0 >^ 0x80uy /\ b0 <^ 0x85uy) /\ (U32.v len > ((U8.v b0) - 0x80)) /\ res = 0ul ==> not success);
-  assert (U8.(b0 >^ 0x80uy /\ b0 <^ 0x85uy) /\ (U32.v len > ((U8.v b0) - 0x80)) /\ not success ==> Seq.length (Seq.slice (as_seq h buf) 1 ((U8.v b0) - 0x80 + 1)) == U32.v ilen);
-  assert (U8.(b0 >^ 0x80uy /\ b0 <^ 0x85uy) /\ (U32.v len > ((U8.v b0) - 0x80)) /\ not success ==> Seq.length (Seq.create ((U8.v b0) - 0x80) 0uy) == U32.v ilen);
-  //assert (U8.(b0 >^ 0x80uy /\ b0 <^ 0x85uy) /\ (U32.v len > ((U8.v b0) - 0x80)) /\ not success ==> (Seq.lemma_eq_intro (Seq.slice (as_seq h buf) 1 ((U8.v b0) - 0x80 + 1)) (Seq.create ((U8.v b0) - 0x80) 0uy)));
-  //assert (U8.(b0 >^ 0x80uy /\ b0 <^ 0x85uy) /\ (U32.v len > ((U8.v b0) - 0x80)) /\ not success ==> (Seq.equal (Seq.slice (as_seq h buf) 1 ((U8.v b0) - 0x80 + 1)) (Seq.create ((U8.v b0) - 0x80) 0uy)));
-  //assert (b0 = 0x81uy /\ (U32.v len > ((U8.v b0) - 0x80)) /\ not success ==> get h buf 1 == 0uy);
-  //assert (b0 = 0x82uy /\ (U32.v len > ((U8.v b0) - 0x80)) /\ not success ==> get h buf 1 == 0uy /\ get h buf 2 == 0uy);
-  //assert (b0 = 0x83uy /\ (U32.v len > ((U8.v b0) - 0x80)) /\ not success ==> get h buf 1 == 0uy /\ get h buf 2 == 0uy /\ get h buf 3 == 0uy);
-  //assert (b0 = 0x84uy /\ (U32.v len > ((U8.v b0) - 0x80)) /\ not success ==> get h buf 1 == 0uy /\ get h buf 2 == 0uy /\ get h buf 3 == 0uy /\ get h buf 4 == 0uy);
-  // TODO
-  //assert (b0 = 0x81uy /\ (U32.v len > ((U8.v b0) - 0x80)) /\ not success ==> Seq.equal (Seq.slice (as_seq h buf) 1 2) (Seq.create 1 0uy));
-  //assert (b0 = 0x81uy /\ (U32.v len > ((U8.v b0) - 0x80)) /\ not success ==> Seq.equal (Seq.slice (as_seq h buf) 1 2) (Seq.create ((U8.v b0) - 0x80) 0uy));
-  //assert (b0 = 0x81uy /\ (U32.v len > ((U8.v b0) - 0x80)) /\ not success ==> Seq.equal (Seq.slice (as_seq h buf) ((U8.v b0) - 0x80) 2) (Seq.create ((U8.v b0) - 0x80) 0uy));
-  //assert (b0 = 0x81uy /\ (U32.v len > ((U8.v b0) - 0x80)) /\ not success ==> Seq.equal (Seq.slice (as_seq h buf) ((U8.v b0) - 0x80) ((U8.v b0) - 0x80 + 1)) (Seq.create ((U8.v b0) - 0x80) 0uy));
-  //assert (U8.v b0 > 081 /\ (U32.v len > ((U8.v b0) - 0x80)) /\ not success ==> Seq.equal (Seq.slice (as_seq h buf) ((U8.v b0) - 0x80) ((U8.v b0) - 0x80 + 1)) (Seq.create ((U8.v b0) - 0x80) 0uy));
-
-  // TODO check long form with starting zero bytes
 
   success
