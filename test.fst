@@ -40,11 +40,35 @@ let big_endian_single n =
   let s = (create 1 n) in
   assert (big_endian s == U8.v (index s 0) + pow2 8 * big_endian (slice s 0 0))
 
-private
-val big_endian_long: (b:Seq.seq U8.t{Seq.length b > 0}) -> Lemma
-  (requires (not (b = Seq.create (Seq.length b) 0uy)))
-  (ensures (big_endian b > 0))
-let read_length_success_lemma6 b = ()
+private // TODO
+val big_endian_long: (b:Seq.seq U8.t{Seq.length b < 2}) -> Lemma
+  //(requires (not (b = Seq.create (Seq.length b) 0uy)))
+  //(requires (U8.v (Seq.index b 0) > 0 \/ U8.v (Seq.index b 1) > 0))
+  //(ensures (big_endian b > 0))
+  (ensures (True))
+  (decreases (Seq.length b))
+let rec big_endian_long b =
+  let open FStar.Seq in
+  let is_zero = (b = Seq.create (Seq.length b) 0uy) in
+  if length b = 0 then ()
+  else (
+    let prev = slice b 1 (length b) in
+    big_endian_long prev;
+    assert (is_zero ==> U8.v (index b 0) = 0);
+    assert (is_zero ==> big_endian b = 0);
+    assert (big_endian prev = 0 /\ U8.v (index b 0) = 0 ==> big_endian b = 0);
+    assert (big_endian prev = 0 /\ U8.v (index b 0) > 0 ==> big_endian b > 0);
+    assert (big_endian prev > 0 ==> big_endian b > 0)
+    //assert (not is_zero ==> not (U8.v (index b 0) = 0))
+    //assert (not is_zero ==> big_endian b > 0)
+  )
+  //else (
+  //  let prev = slice b 1 (length b) in
+  //  big_endian_long prev;
+  //  let prevn = big_endian prev in
+  //  let curn = big_endian b in
+  //  assert (prevn = 0 /\ curn > 0 ==> U8.v (index b 0) > 0)
+  //)
 
 
 
